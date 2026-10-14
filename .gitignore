@@ -30,3 +30,13 @@ android/.idea
 *.sln
 *.sw?
 *.local
+
+# Signing keys & Keystores (Sensitive)
+*.jks
+*.keystore
+signing.properties
+
+# Build artifacts
+public/*.apk
+dist/*.apk
+release/

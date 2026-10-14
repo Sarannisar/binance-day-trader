@@ -48,11 +48,19 @@ export const TradeTrackerTab: React.FC = () => {
   // Export CSV
   const handleExportCSV = () => {
     if (completedTrades.length === 0) return;
+    const sanitize = (val: any) => {
+      const s = String(val ?? '');
+      if (/^[=+\-@\t\r]/.test(s) && isNaN(Number(s))) {
+        return `'${s.replace(/"/g, '""')}`;
+      }
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+
     const headers = 'ID,Symbol,Side,EntryPrice,ExitPrice,Quantity,GrossPnL,FeesPaid,NetPnL,ExitTime\n';
     const rows = completedTrades
       .map(
         (t) =>
-          `${t.id},${t.symbol},${t.side},${t.entryPrice},${t.exitPrice},${t.quantity},${t.grossPnl},${t.feesPaid},${t.netPnl},"${new Date(
+          `${sanitize(t.id)},${sanitize(t.symbol)},${sanitize(t.side)},${t.entryPrice},${t.exitPrice},${t.quantity},${t.grossPnl.toFixed(2)},${t.feesPaid.toFixed(3)},${t.netPnl.toFixed(2)},"${new Date(
             t.exitTime
           ).toISOString()}"`
       )

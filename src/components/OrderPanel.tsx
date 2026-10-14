@@ -96,6 +96,22 @@ export const OrderPanel: React.FC<OrderPanelProps> = ({
         return;
       }
 
+      const refPrice = orderType === 'MARKET' ? currentPrice : parsedLimitPrice;
+      if (parsedStopLoss && parsedStopLoss >= refPrice) {
+        setFeedback({
+          message: `Stop Loss ($${parsedStopLoss}) must be below entry price ($${refPrice.toFixed(2)}) for BUY orders.`,
+          isError: true,
+        });
+        return;
+      }
+      if (parsedTakeProfit && parsedTakeProfit <= refPrice) {
+        setFeedback({
+          message: `Take Profit ($${parsedTakeProfit}) must be above entry price ($${refPrice.toFixed(2)}) for BUY orders.`,
+          isError: true,
+        });
+        return;
+      }
+
       if (orderType === 'MARKET') {
         const res = placeMarketBuy(parsedAmount, parsedStopLoss, parsedTakeProfit);
         setFeedback({ message: res.message, isError: !res.success });

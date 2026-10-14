@@ -363,24 +363,38 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [latestPrice, selectedPair.symbol, openOrders, positions]);
 
-  // Execute full position close
-  const executePositionClose = (symbol: string, exitPrice: number, strategyTag: string) => {
+  // Execute full or partial position close
+  const executePositionClose = (
+    symbol: string,
+    exitPrice: number,
+    strategyTag: string,
+    closeFraction: number = 1
+  ) => {
     const pos = positions[symbol];
     if (!pos || pos.quantity <= 0) return;
 
-    const grossValue = pos.quantity * exitPrice;
+    const fraction = Math.min(1, Math.max(0.01, closeFraction));
+    const isFullClose = fraction >= 0.999;
+    const exitQty = isFullClose ? pos.quantity : pos.quantity * fraction;
+
+    const grossValue = exitQty * exitPrice;
     const exitFee = grossValue * currentFeeRate;
     const netProceeds = grossValue - exitFee;
-    const totalFees = pos.entryFeePaid + exitFee;
-    const grossPnl = grossValue - (pos.avgEntryPrice * pos.quantity);
+    const entryFeeShare = isFullClose ? pos.entryFeePaid : pos.entryFeePaid * fraction;
+    const totalFees = entryFeeShare + exitFee;
+    const costBasis = isFullClose ? pos.totalCost : pos.totalCost * fraction;
+    const grossPnl = grossValue - (pos.avgEntryPrice * exitQty);
     const netPnl = grossPnl - totalFees;
 
     // Credit USDT balance
     setUsdtBalance(prev => prev + netProceeds);
 
-    // Clear holding
+    // Update holding
     const baseAsset = symbol.replace('USDT', '');
-    setHoldings(prev => ({ ...prev, [baseAsset]: 0 }));
+    setHoldings(prev => ({
+      ...prev,
+      [baseAsset]: isFullClose ? 0 : Math.max(0, (prev[baseAsset] || 0) - exitQty),
+    }));
 
     // Record completed trade
     const completedTrade: CompletedTrade = {
@@ -389,12 +403,12 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       side: 'SELL',
       entryPrice: pos.avgEntryPrice,
       exitPrice: exitPrice,
-      quantity: pos.quantity,
+      quantity: exitQty,
       grossPnl,
-      grossPnlPercent: (grossPnl / pos.totalCost) * 100,
+      grossPnlPercent: costBasis > 0 ? (grossPnl / costBasis) * 100 : 0,
       feesPaid: totalFees,
       netPnl,
-      netPnlPercent: (netPnl / pos.totalCost) * 100,
+      netPnlPercent: costBasis > 0 ? (netPnl / costBasis) * 100 : 0,
       entryTime: Date.now() - 60000,
       exitTime: Date.now(),
       durationSeconds: 60,
@@ -403,10 +417,24 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     setCompletedTrades(prev => [completedTrade, ...prev]);
 
-    // Remove active position
+    // Update active position
     setPositions(prev => {
       const copy = { ...prev };
-      delete copy[symbol];
+      if (isFullClose) {
+        delete copy[symbol];
+      } else {
+        const remainingQty = pos.quantity - exitQty;
+        const remainingCost = pos.totalCost - costBasis;
+        copy[symbol] = {
+          ...pos,
+          quantity: remainingQty,
+          totalCost: remainingCost,
+          entryFeePaid: pos.entryFeePaid - entryFeeShare,
+          currentPrice: exitPrice,
+          currentValue: remainingQty * exitPrice,
+          unrealizedGrossPnl: (remainingQty * exitPrice) - remainingCost,
+        };
+      }
       return copy;
     });
   };
@@ -491,10 +519,11 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (currentQty <= 0) return { success: false, message: `No ${baseAsset} to sell.` };
     if (latestPrice <= 0) return { success: false, message: 'Awaiting live Binance price.' };
 
-    const sellQty = currentQty * (qtyPercent / 100);
+    const fraction = Math.min(1, Math.max(0.01, qtyPercent / 100));
+    const sellQty = currentQty * fraction;
     const executionPrice = latestPrice * (1 - riskSettings.slippagePercent / 100);
 
-    executePositionClose(selectedPair.symbol, executionPrice, `Market Sell (${qtyPercent}%)`);
+    executePositionClose(selectedPair.symbol, executionPrice, `Market Sell (${qtyPercent}%)`, fraction);
     return { success: true, message: `Sold ${sellQty.toFixed(4)} ${baseAsset} @ $${executionPrice.toFixed(2)}.` };
   };
 

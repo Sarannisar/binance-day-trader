@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTrading } from '../context/TradingContext';
-import { X, SlidersHorizontal, Smartphone, RefreshCw, Check, Download } from 'lucide-react';
+import { X, SlidersHorizontal, Smartphone, RefreshCw, Check } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -110,26 +110,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             />
           </div>
 
-          {/* Android Standalone APK Download */}
+          {/* Android Standalone APK Information */}
           <div className="bg-[#0b0e14] p-3.5 rounded-xl border border-[#0ecb81]/40 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 text-[#0ecb81] font-bold">
-                <Download size={16} />
-                <span>Download Standalone Android APK</span>
+                <Smartphone size={16} />
+                <span>Standalone Android APK</span>
               </div>
-              <span className="text-[10px] bg-[#0ecb81]/15 text-[#0ecb81] px-2 py-0.5 rounded font-mono font-bold">4.1 MB</span>
+              <span className="text-[10px] bg-[#0ecb81]/15 text-[#0ecb81] px-2 py-0.5 rounded font-mono font-bold">Capacitor Native</span>
             </div>
             <p className="text-[#848e9c] text-[11px] leading-relaxed">
-              Full standalone APK installer compiled with Capacitor. Works 100% independently on your phone anywhere while travelling.
+              Standalone native Android application packaged with Capacitor. Local-only encrypted journal storage with zero telemetry.
             </p>
-            <a
-              href="/BinanceDayTrader.apk"
-              download="BinanceDayTrader.apk"
-              className="w-full flex items-center justify-center space-x-2 py-2.5 bg-[#0ecb81] hover:bg-[#0bb874] text-[#0b0e14] font-bold rounded-lg transition-colors text-xs shadow-md"
-            >
-              <Download size={14} />
-              <span>Download BinanceDayTrader.apk</span>
-            </a>
+            <div className="text-[10px] text-[#848e9c] bg-[#121824] p-2 rounded border border-[#222b40] font-mono">
+              Package: com.binancetrader.papertrading
+            </div>
           </div>
 
           {/* Android App Installation Guide */}
