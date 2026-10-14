@@ -39,8 +39,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenRiskGuide 
         <div className="relative">
           <button
             onClick={() => setPairDropdownOpen(!pairDropdownOpen)}
-            className="flex items-center space-x-2 bg-[#121824] hover:bg-[#1b2234] border border-[#222b40] px-2.5 py-1.5 rounded-lg transition-colors text-left"
+            className="flex items-center space-x-2.5 bg-[#121824] hover:bg-[#1b2234] border border-[#222b40] px-2.5 py-1.5 rounded-lg transition-colors text-left"
           >
+            <img src="/logo.png" alt="App Logo" className="w-7 h-7 rounded-md shrink-0 object-contain" />
             <div>
               <div className="flex items-center space-x-1.5">
                 <span className="font-bold text-sm tracking-wide text-[#eaecef]">
