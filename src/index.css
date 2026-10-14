@@ -35,7 +35,7 @@
 
   /* Support for Android navigation bar safe area */
   .safe-area-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 10px);
   }
 }
 

@@ -75,7 +75,7 @@ export const TradeTrackerTab: React.FC = () => {
   };
 
   return (
-    <div className="p-3 sm:p-4 space-y-4 text-xs font-sans text-[#eaecef]">
+    <div className="p-3 sm:p-4 space-y-4 text-xs font-sans text-[#eaecef] pb-28">
       {/* 1. Account Growth & Equity Header Card */}
       <div className="bg-[#0b0e14] p-4 rounded-2xl border border-[#222b40] shadow-lg">
         <div className="flex items-center justify-between pb-3 border-b border-[#222b40]/80">
