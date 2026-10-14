@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #0b0e14;
+    --bg-secondary: #121824;
+    --bg-tertiary: #1b2234;
+    --border-color: #222b40;
+    --color-up: #0ecb81;
+    --color-down: #f6465d;
+    --color-warning: #f0b90b;
+    --text-primary: #eaecef;
+    --text-secondary: #848e9c;
+  }
+
+  body {
+    background-color: #0b0e14;
+    color: #eaecef;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+
+  /* Monospace tabular numbers for price tickers & balances */
+  .font-mono-numbers {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Support for Android navigation bar safe area */
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+  }
+}
+
+/* Custom scrollbars for trading logs */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0e14;
+}
+::-webkit-scrollbar-thumb {
+  background: #222b40;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #36425d;
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Binance Day Trader</string>
+    <string name="title_activity_main">Binance Day Trader</string>
+    <string name="package_name">com.binancetrader.papertrading</string>
+    <string name="custom_url_scheme">com.binancetrader.papertrading</string>
+</resources>
