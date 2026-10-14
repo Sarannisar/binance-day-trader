@@ -30,9 +30,10 @@ An institutional-grade spot day-trading simulator and risk management applicatio
 
 ## 📦 Standalone Android APK Download
 
-The standalone native APK installer is included in the root of this repository:
-- **File:** [`BinanceDayTrader.apk`](./BinanceDayTrader.apk) (~12 MB)
-- Transfer it to any Android phone and tap to install. Runs standalone without needing a PC.
+The hardened standalone native APK installer is included in the root of this repository:
+- **File:** [`BinanceDayTrader.apk`](./BinanceDayTrader.apk) (~3.5 MB)
+- Transfer it to any Android phone (Android 7.0+ / API 24–36) and tap to install. Runs standalone without needing a PC.
+- Full security and quality audit reports available in [`audit/`](./audit/).
 
 ---
 
@@ -40,7 +41,7 @@ The standalone native APK installer is included in the root of this repository:
 
 - **Frontend:** React 19, TypeScript, Tailwind CSS v4, Lucide Icons
 - **Charting Engine:** TradingView `lightweight-charts` v5
-- **Mobile Engine:** Capacitor v7 Android Native Bridge
+- **Mobile Engine:** Capacitor v8 Android Native Bridge
 - **Market Data:** Binance Public WebSocket & REST API
 
 ---
@@ -60,7 +61,7 @@ npm run build
 # Sync web assets to Android
 npx cap sync android
 
-# Build Android APK
+# Build Hardened Android Release APK
 cd android
-./gradlew assembleDebug
+./gradlew assembleRelease
 ```
