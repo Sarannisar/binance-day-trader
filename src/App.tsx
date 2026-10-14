@@ -11,6 +11,7 @@ import { StrategyGuideTab } from './components/StrategyGuideTab';
 import { RiskCalculatorModal } from './components/RiskCalculatorModal';
 import { RiskGuideModal } from './components/RiskGuideModal';
 import { SettingsModal } from './components/SettingsModal';
+import { NotificationBanner } from './components/NotificationBanner';
 import { TrendingUp, ListFilter, BarChart3, GraduationCap } from 'lucide-react';
 
 export function MainTradingApp() {
@@ -52,6 +53,9 @@ export function MainTradingApp() {
 
   return (
     <div className="min-h-screen bg-[#0b0e14] text-[#eaecef] flex flex-col max-w-4xl mx-auto shadow-2xl border-x border-[#222b40]/50 relative pb-20">
+      {/* Floating In-App Market Notification Banner */}
+      <NotificationBanner />
+
       {/* 1. Header with Pair Switcher & Live Equity */}
       <Header
         onOpenSettings={() => setIsSettingsOpen(true)}

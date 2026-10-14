@@ -13,6 +13,7 @@ import type {
 import { DEFAULT_PAIR } from '../constants/pairs';
 import { binanceService } from '../services/binance';
 import { analyzeStrategy } from '../utils/indicators';
+import { notificationService } from '../services/notificationService';
 
 interface TradingContextType {
   selectedPair: CryptoPair;
@@ -27,6 +28,8 @@ interface TradingContextType {
   usdtBalance: number;
   holdings: Record<string, number>;
   initialBalance: number;
+  permanentInitialBalance: number;
+  setPermanentInitialBalance: (amount: number, updateCurrentUsdt?: boolean) => void;
   positions: Record<string, Position>;
   currentPosition: Position | null;
   totalPortfolioValue: number;
@@ -57,13 +60,14 @@ const STORAGE_KEYS = {
   BALANCE: 'paper_trade_usdt_balance',
   HOLDINGS: 'paper_trade_holdings',
   INITIAL_BAL: 'paper_trade_initial_balance',
+  PERM_INITIAL_BAL: 'paper_trade_permanent_initial_balance',
   ORDERS: 'paper_trade_open_orders',
   TRADES: 'paper_trade_completed_trades',
   POSITIONS: 'paper_trade_positions',
   SETTINGS: 'paper_trade_risk_settings',
 };
 
-const DEFAULT_INITIAL_BALANCE = 5000; // $5,000 USDT default paper balance
+const DEFAULT_INITIAL_BALANCE = 2000; // $2,000 USDT default paper trading starting balance
 
 const TradingContext = createContext<TradingContextType | undefined>(undefined);
 
@@ -74,15 +78,36 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [currentTicker, setCurrentTicker] = useState<TickerData | null>(null);
 
   // Persistent States
+  const [permanentInitialBalance, setPermanentInitialBalanceState] = useState<number>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.PERM_INITIAL_BAL);
+    if (saved) return parseFloat(saved);
+    const initialBal = localStorage.getItem(STORAGE_KEYS.INITIAL_BAL);
+    return initialBal ? parseFloat(initialBal) : DEFAULT_INITIAL_BALANCE;
+  });
+
+  const [initialBalance, setInitialBalance] = useState<number>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.INITIAL_BAL);
+    if (saved) return parseFloat(saved);
+    const perm = localStorage.getItem(STORAGE_KEYS.PERM_INITIAL_BAL);
+    return perm ? parseFloat(perm) : DEFAULT_INITIAL_BALANCE;
+  });
+
   const [usdtBalance, setUsdtBalance] = useState<number>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.BALANCE);
     return saved ? parseFloat(saved) : DEFAULT_INITIAL_BALANCE;
   });
 
-  const [initialBalance, setInitialBalance] = useState<number>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.INITIAL_BAL);
-    return saved ? parseFloat(saved) : DEFAULT_INITIAL_BALANCE;
-  });
+  const setPermanentInitialBalance = (amount: number, updateCurrentUsdt: boolean = false) => {
+    const cleanAmount = Math.max(1, amount);
+    setPermanentInitialBalanceState(cleanAmount);
+    setInitialBalance(cleanAmount);
+    localStorage.setItem(STORAGE_KEYS.PERM_INITIAL_BAL, cleanAmount.toString());
+    localStorage.setItem(STORAGE_KEYS.INITIAL_BAL, cleanAmount.toString());
+    if (updateCurrentUsdt) {
+      setUsdtBalance(cleanAmount);
+      localStorage.setItem(STORAGE_KEYS.BALANCE, cleanAmount.toString());
+    }
+  };
 
   const [holdings, setHoldings] = useState<Record<string, number>>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.HOLDINGS);
@@ -121,6 +146,14 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.BALANCE, usdtBalance.toString());
   }, [usdtBalance]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.INITIAL_BAL, initialBalance.toString());
+  }, [initialBalance]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.PERM_INITIAL_BAL, permanentInitialBalance.toString());
+  }, [permanentInitialBalance]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.HOLDINGS, JSON.stringify(holdings));
@@ -207,6 +240,21 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const price = currentTicker?.price || (candles.length > 0 ? candles[candles.length - 1].close : 0);
     return analyzeStrategy(candles, price);
   }, [candles, currentTicker?.price]);
+
+  // Monitor & Notify Market State Changes (RSI, Trends, 24h Extrema, Strategy Setups)
+  useEffect(() => {
+    if (!currentTicker || currentTicker.price <= 0) return;
+    notificationService.evaluateMarketState({
+      symbol: selectedPair.symbol,
+      currentPrice: currentTicker.price,
+      rsi: strategy.rsi,
+      trend: strategy.trend,
+      signal: strategy.signal,
+      high24h: currentTicker.high24h,
+      low24h: currentTicker.low24h,
+      priceChangePercent: currentTicker.priceChangePercent,
+    });
+  }, [selectedPair.symbol, currentTicker?.price, strategy.rsi, strategy.trend, strategy.signal, currentTicker?.high24h, currentTicker?.low24h, currentTicker?.priceChangePercent]);
 
   // Real-time Order Matching Engine & TP/SL Trigger
   const latestPrice = currentTicker?.price || 0;
@@ -309,6 +357,14 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
                   };
                 }
               });
+
+              notificationService.notifyTradeFill({
+                symbol: selectedPair.symbol,
+                side: 'BUY',
+                type: 'LIMIT',
+                price: fillPrice,
+                quantity: order.quantity,
+              });
             } else {
               // Sell filled
               const baseAsset = selectedPair.baseAsset;
@@ -343,6 +399,15 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 exitTime: Date.now(),
                 durationSeconds: Math.floor((Date.now() - order.createdAt) / 1000),
                 strategyTag: 'Limit Order Fill'
+              });
+
+              notificationService.notifyTradeFill({
+                symbol: selectedPair.symbol,
+                side: 'SELL',
+                type: 'LIMIT',
+                price: fillPrice,
+                quantity: order.quantity,
+                pnl: netPnl,
               });
             }
           } else {
@@ -416,6 +481,27 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     setCompletedTrades(prev => [completedTrade, ...prev]);
+
+    // Trigger notification if automated Stop Loss or Take Profit
+    if (strategyTag.includes('Stop Loss')) {
+      notificationService.notifyTradeFill({
+        symbol,
+        side: 'SELL',
+        type: 'SL',
+        price: exitPrice,
+        quantity: exitQty,
+        pnl: netPnl,
+      });
+    } else if (strategyTag.includes('Take Profit')) {
+      notificationService.notifyTradeFill({
+        symbol,
+        side: 'SELL',
+        type: 'TP',
+        price: exitPrice,
+        quantity: exitQty,
+        pnl: netPnl,
+      });
+    }
 
     // Update active position
     setPositions(prev => {
@@ -600,14 +686,16 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Reset paper trading account
-  const resetAccount = (initialUsdt: number = DEFAULT_INITIAL_BALANCE) => {
-    setUsdtBalance(initialUsdt);
-    setInitialBalance(initialUsdt);
+  const resetAccount = (initialUsdt?: number) => {
+    const targetBalance = initialUsdt !== undefined ? initialUsdt : permanentInitialBalance;
+    setUsdtBalance(targetBalance);
+    setInitialBalance(targetBalance);
     setHoldings({ SOL: 0, BTC: 0, ETH: 0, BNB: 0, DOGE: 0 });
     setPositions({});
     setOpenOrders([]);
     setCompletedTrades([]);
-    localStorage.removeItem(STORAGE_KEYS.BALANCE);
+    localStorage.setItem(STORAGE_KEYS.BALANCE, targetBalance.toString());
+    localStorage.setItem(STORAGE_KEYS.INITIAL_BAL, targetBalance.toString());
     localStorage.removeItem(STORAGE_KEYS.HOLDINGS);
     localStorage.removeItem(STORAGE_KEYS.POSITIONS);
     localStorage.removeItem(STORAGE_KEYS.ORDERS);
@@ -686,6 +774,8 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         usdtBalance,
         holdings,
         initialBalance,
+        permanentInitialBalance,
+        setPermanentInitialBalance,
         positions,
         currentPosition,
         totalPortfolioValue,

@@ -23,6 +23,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenRiskGuide 
     currentTicker,
     usdtBalance,
     totalPortfolioValue,
+    initialBalance,
     resetAccount,
   } = useTrading();
 
@@ -134,8 +135,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenRiskGuide 
           {/* Reset Account Button */}
           <button
             onClick={() => {
-              if (window.confirm('Reset your paper trading account to $5,000 USDT?')) {
-                resetAccount(5000);
+              if (window.confirm(`Reset your paper trading account to $${initialBalance.toLocaleString()} USDT?`)) {
+                resetAccount();
               }
             }}
             className="p-1.5 bg-[#121824] hover:bg-[#1b2234] border border-[#222b40] text-[#848e9c] hover:text-[#f6465d] rounded-lg transition-colors"

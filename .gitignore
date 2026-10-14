@@ -40,3 +40,4 @@ signing.properties
 public/*.apk
 dist/*.apk
 release/
+*.idsig

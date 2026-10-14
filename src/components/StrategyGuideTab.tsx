@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useTrading } from '../context/TradingContext';
 import {
   Zap,
   HelpCircle,
 } from 'lucide-react';
 
 export const StrategyGuideTab: React.FC = () => {
-  const [tradeCapital, setTradeCapital] = useState<number>(5000);
+  const { initialBalance } = useTrading();
+  const [tradeCapital, setTradeCapital] = useState<number>(initialBalance || 2000);
   const [riskPct, setRiskPct] = useState<number>(1.5);
   const [winRateSlider, setWinRateSlider] = useState<number>(60);
 

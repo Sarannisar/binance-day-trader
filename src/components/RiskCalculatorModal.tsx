@@ -19,10 +19,11 @@ export const RiskCalculatorModal: React.FC<RiskCalculatorModalProps> = ({
     selectedPair,
     strategy,
     riskSettings,
+    initialBalance,
   } = useTrading();
 
   const currentPrice = currentTicker?.price || 150;
-  const [accountSize, setAccountSize] = useState<number>(totalPortfolioValue || 5000);
+  const [accountSize, setAccountSize] = useState<number>(totalPortfolioValue || initialBalance || 2000);
   const [riskPercent, setRiskPercent] = useState<number>(riskSettings.riskPercentPerTrade || 1.5);
   const [entryPrice, setEntryPrice] = useState<number>(currentPrice);
   const [stopLossPrice, setStopLossPrice] = useState<number>(
